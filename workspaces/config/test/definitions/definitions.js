@@ -730,18 +730,6 @@ YYYY\r
   t.end()
 })
 
-t.test('detect CI', t => {
-  const defnNoCI = mockDefs({
-    'ci-info': { isCI: false, name: null },
-  })
-  const defnCIFoo = mockDefs({
-    'ci-info': { isCI: false, name: 'foo' },
-  })
-  t.equal(defnNoCI['ci-name'].default, null, 'null when not in CI')
-  t.equal(defnCIFoo['ci-name'].default, 'foo', 'name of CI when in CI')
-  t.end()
-})
-
 t.test('user-agent', t => {
   const npmVersion = '1.2.3'
   const obj = {
@@ -756,15 +744,17 @@ t.test('user-agent', t => {
   t.equal(process.env.npm_config_user_agent, flat.userAgent, 'npm_user_config environment is set')
   t.not(obj['user-agent'], flat.userAgent, 'config user-agent template is not translated')
 
-  obj['ci-name'] = 'foo'
-  obj['user-agent'] = mockDefs()['user-agent'].default
+  obj['user-agent'] = mockDefs({
+    'ci-info': { isCi: true, name: 'foo' },
+  })['user-agent'].default
   const expectCI = `${expectNoCI} ci/foo`
-  mockDefs()['user-agent'].flatten('user-agent', obj, flat)
+  mockDefs({
+    'ci-info': { isCi: true, name: 'foo' },
+  })['user-agent'].flatten('user-agent', obj, flat)
   t.equal(flat.userAgent, expectCI)
   t.equal(process.env.npm_config_user_agent, flat.userAgent, 'npm_user_config environment is set')
   t.not(obj['user-agent'], flat.userAgent, 'config user-agent template is not translated')
 
-  delete obj['ci-name']
   obj.workspaces = true
   obj['user-agent'] = mockDefs()['user-agent'].default
   const expectWorkspaces = expectNoCI.replace('workspaces/false', 'workspaces/true')
